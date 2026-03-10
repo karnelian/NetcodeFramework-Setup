@@ -2,7 +2,7 @@
 chcp 65001 >nul
 title NetcodeFramework Project Setup
 echo ============================================
-echo   NetcodeFramework Project Setup v1.0
+echo   NetcodeFramework Project Setup 6000.3.10f1
 echo ============================================
 echo.
 
