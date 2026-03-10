@@ -1,15 +1,12 @@
 @echo off
 chcp 65001 >nul
 title NetcodeFramework Project Setup
-
 echo ============================================
-echo   NetcodeFramework Project Setup
+echo   NetcodeFramework Project Setup v1.0
 echo ============================================
 echo.
 
-:: ──────────────────────────────────────────────
-:: Step 1: gh CLI 확인
-:: ──────────────────────────────────────────────
+:: Check gh CLI
 where gh >nul 2>nul
 if errorlevel 1 (
     echo [ERROR] gh CLI not found.
@@ -18,9 +15,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-:: ──────────────────────────────────────────────
-:: Step 2: GitHub 인증 확인/실행
-:: ──────────────────────────────────────────────
+:: Check GitHub auth
 echo [1/7] Checking GitHub authentication...
 gh auth status >nul 2>nul
 if errorlevel 1 (
@@ -35,7 +30,7 @@ if errorlevel 1 (
 )
 echo   Authenticated.
 
-:: 인증된 username 자동 취득
+:: Get username
 for /f "delims=" %%i in ('gh api user -q .login 2^>nul') do set GITHUB_USER=%%i
 if "%GITHUB_USER%"=="" (
     echo [ERROR] Could not get GitHub username.
@@ -45,9 +40,7 @@ if "%GITHUB_USER%"=="" (
 echo   User: %GITHUB_USER%
 echo.
 
-:: ──────────────────────────────────────────────
-:: Step 3: 프로젝트 설정 입력
-:: ──────────────────────────────────────────────
+:: Input settings
 set /p REPO_NAME="Repository Name: "
 if "%REPO_NAME%"=="" (
     echo [ERROR] Repository name is required.
@@ -55,7 +48,7 @@ if "%REPO_NAME%"=="" (
     exit /b 1
 )
 
-set /p VISIBILITY="Visibility (private/public, default: private): "
+set /p VISIBILITY="Visibility - private or public (default: private): "
 if "%VISIBILITY%"=="" set VISIBILITY=private
 
 set /p CLONE_DIR="Clone Directory (default: C:\Project): "
@@ -78,9 +71,7 @@ if /i "%CONFIRM%"=="n" (
     exit /b 0
 )
 
-:: ──────────────────────────────────────────────
-:: Step 4: 템플릿으로 레포 생성
-:: ──────────────────────────────────────────────
+:: Create repo from template
 echo.
 echo [2/7] Creating repository from template...
 gh repo create %GITHUB_USER%/%REPO_NAME% --template karnelian/NetcodeFramework-Template --%VISIBILITY%
@@ -90,14 +81,10 @@ if errorlevel 1 (
     exit /b 1
 )
 echo   Created: %GITHUB_USER%/%REPO_NAME%
-
-:: GitHub가 템플릿 복사 완료할 때까지 대기
-echo   Waiting for GitHub to finish template copy...
+echo   Waiting for GitHub...
 timeout /t 5 /nobreak >nul
 
-:: ──────────────────────────────────────────────
-:: Step 5: 클론 + LFS
-:: ──────────────────────────────────────────────
+:: Clone
 echo.
 echo [3/7] Cloning repository...
 if not exist "%CLONE_DIR%" mkdir "%CLONE_DIR%"
@@ -110,32 +97,30 @@ if errorlevel 1 (
 )
 cd /d "%CLONE_DIR%\%REPO_NAME%"
 
+:: LFS
 echo.
 echo [4/7] Setting up Git LFS...
 git lfs install
 
+:: Activate gitattributes
 echo.
 echo [5/7] Activating LFS rules...
 copy /y .gitattributes.template .gitattributes >nul
 git add .gitattributes
 git commit -m "Enable Git LFS rules"
 
-:: ──────────────────────────────────────────────
-:: Step 6: 서브모듈 추가
-:: ──────────────────────────────────────────────
+:: Submodule
 echo.
 echo [6/7] Adding NetcodeFramework Core submodule...
 git submodule add https://github.com/karnelian/NetcodeFramework-Core.git Assets/NetcodeFramework
 if errorlevel 1 (
-    echo [ERROR] Submodule add failed. Check access to NetcodeFramework-Core.
+    echo [ERROR] Submodule add failed.
     pause
     exit /b 1
 )
 git commit -m "Add NetcodeFramework Core submodule"
 
-:: ──────────────────────────────────────────────
-:: Step 7: Push
-:: ──────────────────────────────────────────────
+:: Push
 echo.
 echo [7/7] Pushing to remote...
 git push
